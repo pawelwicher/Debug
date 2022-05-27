@@ -1,0 +1,125 @@
+﻿@page
+@model IndexModel
+
+<div class="row">
+    <div class="col-md-12 text-center">
+        <h1>@Model.FarmName</h1>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div style="height: 450px; width: 100%;">
+            <div id="chart1" style="height: 100%; width: 100%;"></div>
+            <div id="total" style="position:absolute; left:0px; top:65px; height:100%; width:100%; line-height:360px; text-align:center; font-size:36px;"></div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div style="height: 450px; width: 100%;">
+            <div id="chart2" style="height: 100%; width: 100%;"></div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8 col-md-offset-2">
+        <div style="height: 450px; width: 100%;">
+            <div id="chart3" style="height: 100%; width: 100%;"></div>
+        </div>
+    </div>
+</div>
+
+@section Scripts{
+    <script type="text/javascript">
+        $(document).ready(function () {
+
+            $.getJSON("/Index?handler=ReproductionStatus", function (data) {
+
+                let points = [];
+                let total = 0;
+
+                for (let x of data) {
+                    points.push({ y: x.value, label: x.name });
+                    total += x.value;
+                }
+
+                new CanvasJS.Chart("chart1", {
+                    animationEnabled: true,
+                    title: {
+                        text: "Reproduction status"
+                    },
+                    data: [{
+                        type: "doughnut",
+                        startAngle: 60,
+                        indexLabelFontSize: 20,
+                        indexLabel: "{label}",
+                        toolTipContent: "{label}: {y}",
+                        dataPoints: points
+                    }]
+                }).render();
+
+                $('#total').text(total);
+            });
+
+            $.getJSON("/Index?handler=GroupsSummary", function (data) {
+
+                let points = [];
+
+                for (let x of data) {
+                    points.push({ y: x.value, label: x.name });
+                }
+
+                new CanvasJS.Chart("chart2", {
+                    animationEnabled: true,
+                    title: {
+                        text: "Groups summary"
+                    },
+                    data: [{
+                        type: "pie",
+                        startAngle: 60,
+                        indexLabelFontSize: 20,
+                        indexLabel: "{label}",
+                        toolTipContent: "{label}: {y}",
+                        dataPoints: points
+                    }]
+                }).render();
+            });
+
+            $.getJSON("/Index?handler=DemographyKpi", function (data) {
+
+                let pointsSerie1 = [];
+                let pointsSerie2 = [];
+                let i = 0;
+
+                for (let x of data) {
+                    i++;
+                    pointsSerie1.push({ x: i, y: x.exitedCount, label: x.period });
+                    pointsSerie2.push({ x: i, y: x.bornCount, label: x.period });
+                }
+
+                new CanvasJS.Chart("chart3", {
+                    title: {
+                        text: "Demography"
+                    },
+                    data: [{
+                        type: "column",
+                        name: "Exited",
+                        color: "red",
+                        showInLegend: true,
+                        toolTipContent: "{label}<br/>Exited: {y}",
+                        dataPoints: pointsSerie1
+                    },
+                    {
+                        type: "column",
+                        name: "Born",
+                        color: "green",
+                        showInLegend: true,
+                        toolTipContent: "{label}<br/>Born: {y}",
+                        dataPoints: pointsSerie2
+                    }]
+                }).render();
+            });
+
+        });
+    </script>
+}
